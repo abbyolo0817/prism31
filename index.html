@@ -34,7 +34,7 @@
             right: 20px;
             z-index: 1000;
             display: flex;
-            flex-direction: row; /* 改為水平排列 */
+            flex-direction: column; /* 改為垂直排列 */
             gap: 10px;
             display: none; /* 初始時隱藏按鈕 */
             flex-wrap: wrap; /* 添加換行功能，使按鈕可以在需要時換行 */
@@ -65,16 +65,12 @@
             background-color: #339CFF; /* 懸停時變亮 */
         }
         .blue-row {
-            /* 讓這三個按鈕都換到新的一行 */
-            flex-basis: 100%;
             width: 100%;
-            /* 可選：讓三個藍色按鈕平均分配寬度 */
             display: flex;
+            flex-direction: row;
             justify-content: flex-end;
-            margin-top: 0; /* 可依需求調整間距 */
-        }
-        .blue-row:not(:last-child) {
-            margin-right: 10px;
+            gap: 10px;
+            margin-top: 5px; /* 可依需求調整上下間距 */
         }
     </style>
 
@@ -151,9 +147,11 @@
     <div class="button-container">
         <a href="https://abbyolo0817.github.io/prism32/" class="ar-button">頂點</a>
         <a href="https://abbyolo0817.github.io/prism33/" class="ar-button">邊</a>
-        <a href="https://abbyolo0817.github.io/prism41/" class="ar-button blue-button blue-row">四角柱</a>
-        <a href="https://abbyolo0817.github.io/prism51/" class="ar-button blue-button blue-row">五角柱</a>
-        <a href="https://abbyolo0817.github.io/prism61/" class="ar-button blue-button blue-row">六角柱</a>
+        <div class="blue-row">
+            <a href="https://abbyolo0817.github.io/prism41/" class="ar-button blue-button">四角柱</a>
+            <a href="https://abbyolo0817.github.io/prism51/" class="ar-button blue-button">五角柱</a>
+            <a href="https://abbyolo0817.github.io/prism61/" class="ar-button blue-button">六角柱</a>
+        </div>
     </div>
 
     <a-scene mindar-image="imageTargetSrc: ./targets.mind; 

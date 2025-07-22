@@ -64,6 +64,18 @@
         .blue-button:hover {
             background-color: #339CFF; /* 懸停時變亮 */
         }
+        .blue-row {
+            /* 讓這三個按鈕都換到新的一行 */
+            flex-basis: 100%;
+            width: 100%;
+            /* 可選：讓三個藍色按鈕平均分配寬度 */
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 0; /* 可依需求調整間距 */
+        }
+        .blue-row:not(:last-child) {
+            margin-right: 10px;
+        }
     </style>
 
     <!-- 直接在頭部定義手勢處理腳本 -->
@@ -139,9 +151,9 @@
     <div class="button-container">
         <a href="https://abbyolo0817.github.io/prism32/" class="ar-button">頂點</a>
         <a href="https://abbyolo0817.github.io/prism33/" class="ar-button">邊</a>
-        <a href="https://abbyolo0817.github.io/prism41/" class="ar-button blue-button">四角柱</a>
-        <a href="https://abbyolo0817.github.io/prism51/" class="ar-button blue-button">五角柱</a>
-        <a href="https://abbyolo0817.github.io/prism61/" class="ar-button blue-button">六角柱</a>
+        <a href="https://abbyolo0817.github.io/prism41/" class="ar-button blue-button blue-row">四角柱</a>
+        <a href="https://abbyolo0817.github.io/prism51/" class="ar-button blue-button blue-row">五角柱</a>
+        <a href="https://abbyolo0817.github.io/prism61/" class="ar-button blue-button blue-row">六角柱</a>
     </div>
 
     <a-scene mindar-image="imageTargetSrc: ./targets.mind; 

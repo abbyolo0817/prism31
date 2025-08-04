@@ -82,70 +82,6 @@
 
     <!-- 直接在頭部定義手勢處理腳本 -->
     <script>
-        // 添加模型穩定性組件
-        AFRAME.registerComponent('model-stabilizer', {
-            schema: {
-                smoothingFactor: { default: 0.1 },
-                positionThreshold: { default: 0.01 },
-                rotationThreshold: { default: 0.01 }
-            },
-
-            init: function() {
-                this.targetPosition = new THREE.Vector3();
-                this.targetRotation = new THREE.Euler();
-                this.currentPosition = new THREE.Vector3();
-                this.currentRotation = new THREE.Euler();
-                
-                this.el.object3D.getWorldPosition(this.currentPosition);
-                this.currentRotation.copy(this.el.object3D.rotation);
-            },
-
-            tick: function() {
-                const object3D = this.el.object3D;
-                
-                // 獲取當前位置和旋轉
-                object3D.getWorldPosition(this.targetPosition);
-                this.targetRotation.copy(object3D.rotation);
-                
-                // 平滑位置
-                this.currentPosition.lerp(this.targetPosition, this.data.smoothingFactor);
-                
-                // 平滑旋轉
-                this.currentRotation.x += (this.targetRotation.x - this.currentRotation.x) * this.data.smoothingFactor;
-                this.currentRotation.y += (this.targetRotation.y - this.currentRotation.y) * this.data.smoothingFactor;
-                this.currentRotation.z += (this.targetRotation.z - this.currentRotation.z) * this.data.smoothingFactor;
-                
-                // 應用平滑後的位置和旋轉
-                object3D.position.copy(this.currentPosition);
-                object3D.rotation.copy(this.currentRotation);
-            }
-        });
-
-        // 添加相機穩定性組件
-        AFRAME.registerComponent('camera-stabilizer', {
-            schema: {
-                smoothingFactor: { default: 0.05 }
-            },
-
-            init: function() {
-                this.targetPosition = new THREE.Vector3();
-                this.currentPosition = new THREE.Vector3();
-            },
-
-            tick: function() {
-                const camera = this.el.object3D;
-                
-                // 獲取當前位置
-                camera.getWorldPosition(this.targetPosition);
-                
-                // 平滑位置
-                this.currentPosition.lerp(this.targetPosition, this.data.smoothingFactor);
-                
-                // 應用平滑後的位置
-                camera.position.copy(this.currentPosition);
-            }
-        });
-
         AFRAME.registerComponent('gesture-handler', {
             schema: {
                 enabled: { default: true },
@@ -228,33 +164,28 @@
 
     <a-scene mindar-image="imageTargetSrc: ./targets.mind; 
              autoStart: true;
-             filterMinCF: 0.002;
-             filterBeta: 0.005;
-             warmupTolerance: 10;
-             missTolerance: 10;
-             maxTrack: 1" 
+             filterMinCF: 0.001;
+             filterBeta: 0.01;
+             warmupTolerance: 5;
+             missTolerance: 5" 
              color-space="sRGB" 
              renderer="colorManagement: true, physicallyCorrectLights" 
              vr-mode-ui="enabled: false" 
              device-orientation-permission-ui="enabled: false"
              embedded>
         
-        <a-camera position="0 0 0" 
-                  look-controls="enabled: false" 
-                  cursor="fuse: false; rayOrigin: mouse;"
-                  camera-stabilizer="smoothingFactor: 0.05"></a-camera>
+        <a-camera position="0 0 0" look-controls="enabled: false" cursor="fuse: false; rayOrigin: mouse;"></a-camera>
 
         <!-- 保留單一目標圖片和模型 -->
         <a-entity mindar-image-target="targetIndex: 0">
             <a-gltf-model id="model" 
                          class="clickable"
                          src="./assets/model.glb" 
-                         position="0 0.1 0" 
+                         position="0 0 0" 
                          scale="0.5 0.5 0.5"
                          rotation="0 0 0"
                          animation-mixer
-                         gesture-handler
-                         model-stabilizer></a-gltf-model>
+                         gesture-handler></a-gltf-model>
         </a-entity>
     </a-scene>
 

@@ -19,6 +19,9 @@
             width: 100vw;
             height: 100vh;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            /* 确保安卓设备不会出现滚动条 */
+            -webkit-overflow-scrolling: touch;
+            position: fixed;
         }
         .a-enter-vr {
             display: none !important;
@@ -37,10 +40,18 @@
             display: none; /* 初始時隱藏按鈕 */
             max-width: 300px;
             /* 移除可能不兼容的flexbox屬性 */
+            /* 确保按钮在安卓设备上正确显示 */
+            transform: translateZ(0);
+            -webkit-transform: translateZ(0);
+            /* 防止按钮跑到画面外 */
+            max-height: calc(100vh - 40px);
+            overflow: visible;
         }
         .yellow-row, .blue-row {
             margin-bottom: 10px;
             text-align: right;
+            /* 确保行内容不会超出容器 */
+            white-space: nowrap;
         }
         .ar-button {
             display: inline-block;
@@ -68,6 +79,11 @@
             min-height: 44px;
             line-height: 1.2;
             vertical-align: middle;
+            /* 防止按钮超出边界 */
+            box-sizing: border-box;
+            /* 确保按钮在安卓上正确渲染 */
+            -webkit-transform: translateZ(0);
+            transform: translateZ(0);
         }
         .ar-button:hover {
             background-color: #FFD133;
@@ -100,11 +116,78 @@
                 bottom: 15px;
                 right: 15px;
                 max-width: 280px;
+                /* 确保在小屏幕上按钮不会超出边界 */
+                max-height: calc(100vh - 30px);
             }
             .ar-button {
                 padding: 10px 16px;
                 font-size: 14px;
                 margin-left: 8px;
+                /* 确保按钮在小屏幕上正确显示 */
+                max-width: calc(50vw - 30px);
+            }
+        }
+        
+        /* 安卓设备特殊处理 */
+        @media screen and (max-width: 1024px) {
+            .button-container {
+                /* 使用更安全的定位方式 */
+                position: fixed;
+                bottom: env(safe-area-inset-bottom, 20px);
+                right: env(safe-area-inset-right, 20px);
+                /* 确保按钮容器不会超出视口 */
+                max-width: min(300px, calc(100vw - 40px));
+                max-height: min(200px, calc(100vh - 40px));
+            }
+            
+            .yellow-row, .blue-row {
+                /* 确保行内容适应容器宽度 */
+                max-width: 100%;
+                overflow: hidden;
+            }
+            
+            .ar-button {
+                /* 确保按钮适应行宽度 */
+                max-width: calc((100% - 20px) / 2);
+                min-width: 80px;
+                /* 防止按钮文字溢出 */
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+        }
+        
+        /* 超小屏幕设备处理 */
+        @media (max-width: 480px) {
+            .button-container {
+                bottom: 10px;
+                right: 10px;
+                max-width: calc(100vw - 20px);
+            }
+            
+            .ar-button {
+                padding: 8px 12px;
+                font-size: 12px;
+                margin-left: 5px;
+                min-width: 60px;
+            }
+            
+            .yellow-row, .blue-row {
+                margin-bottom: 5px;
+            }
+        }
+        
+        /* 横屏模式处理 */
+        @media (orientation: landscape) and (max-height: 500px) {
+            .button-container {
+                bottom: 10px;
+                right: 10px;
+                max-height: calc(100vh - 20px);
+            }
+            
+            .ar-button {
+                padding: 8px 16px;
+                min-height: 36px;
             }
         }
     </style>
@@ -239,16 +322,95 @@
             buttonContainer.style.display = 'block';
             buttonContainer.style.visibility = 'visible';
             buttonContainer.style.opacity = '1';
+            
             // 為安卓設備添加額外的樣式
             if (isAndroid()) {
                 buttonContainer.style.position = 'fixed';
                 buttonContainer.style.zIndex = '9999';
                 // 確保按鈕在安卓上始終可見
                 buttonContainer.setAttribute('data-visible', 'true');
+                
+                // 计算并设置按钮位置，确保在视口内
+                adjustButtonPosition();
             }
         }
         
-        // 監聽模型加載
+        // 新增：调整按钮位置函数
+        function adjustButtonPosition() {
+            if (!isAndroid()) return;
+            
+            console.log('调整按钮位置');
+            
+            // 获取视口尺寸
+            const viewportWidth = window.innerWidth || document.documentElement.clientWidth;
+            const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+            
+            // 获取按钮容器尺寸
+            const buttonRect = buttonContainer.getBoundingClientRect();
+            const buttonWidth = buttonRect.width;
+            const buttonHeight = buttonRect.height;
+            
+            // 计算安全位置
+            let bottom = 20;
+            let right = 20;
+            
+            // 确保按钮不会超出右边界
+            if (right + buttonWidth > viewportWidth) {
+                right = Math.max(10, viewportWidth - buttonWidth - 10);
+            }
+            
+            // 确保按钮不会超出下边界
+            if (bottom + buttonHeight > viewportHeight) {
+                bottom = Math.max(10, viewportHeight - buttonHeight - 10);
+            }
+            
+            // 应用新位置
+            buttonContainer.style.bottom = bottom + 'px';
+            buttonContainer.style.right = right + 'px';
+            
+            console.log('按钮位置调整完成:', { bottom, right, viewportWidth, viewportHeight });
+        }
+        
+        // 新增：视口变化处理
+        function handleViewportChange() {
+            if (isAndroid() && buttonsShown) {
+                console.log('视口变化，重新调整按钮位置');
+                setTimeout(adjustButtonPosition, 100);
+            }
+        }
+        
+        // 监听视口变化
+        window.addEventListener('resize', handleViewportChange);
+        window.addEventListener('orientationchange', function() {
+            console.log('设备方向改变');
+            setTimeout(handleViewportChange, 500);
+        });
+        
+        // 监听滚动事件（防止意外滚动）
+        window.addEventListener('scroll', function() {
+            if (isAndroid()) {
+                // 在安卓设备上阻止页面滚动
+                window.scrollTo(0, 0);
+            }
+        });
+        
+        // 监听触摸事件，防止意外滚动
+        document.addEventListener('touchmove', function(e) {
+            if (isAndroid() && buttonsShown) {
+                // 只允许在按钮区域内的触摸滚动
+                const touch = e.touches[0];
+                const buttonRect = buttonContainer.getBoundingClientRect();
+                
+                if (touch.clientX < buttonRect.left || 
+                    touch.clientX > buttonRect.right || 
+                    touch.clientY < buttonRect.top || 
+                    touch.clientY > buttonRect.bottom) {
+                    e.preventDefault();
+                }
+            }
+        }, { passive: false });
+
+        // 监听模型加载
         document.querySelector('#model').addEventListener('model-loaded', function() {
             console.log('模型已加載');
         });
@@ -357,6 +519,11 @@
                     forceShowButtons();
                     buttonsShown = true;
                 }
+                
+                // 安卓设备：确保按钮位置正确
+                if (isAndroid()) {
+                    setTimeout(adjustButtonPosition, 500);
+                }
             }, 3000);
         });
         
@@ -435,6 +602,20 @@
                 if (computedStyle.display === 'none' || computedStyle.visibility === 'hidden') {
                     console.log('檢測到按鈕被隱藏，重新顯示');
                     forceShowButtons();
+                }
+                
+                // 安卓设备：检查按钮位置是否正确
+                if (isAndroid()) {
+                    const buttonRect = buttonContainer.getBoundingClientRect();
+                    const viewportWidth = window.innerWidth || document.documentElement.clientWidth;
+                    const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+                    
+                    // 如果按钮超出视口，重新调整位置
+                    if (buttonRect.right > viewportWidth || buttonRect.bottom > viewportHeight || 
+                        buttonRect.left < 0 || buttonRect.top < 0) {
+                        console.log('检测到按钮位置超出视口，重新调整');
+                        adjustButtonPosition();
+                    }
                 }
             }
         }, 2000);

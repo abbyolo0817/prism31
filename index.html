@@ -77,22 +77,17 @@
             user-select: none;
             /* 確保按鈕在安卓上可見 */
             min-height: 44px;
-            line-height: 1.2;
+            line-height: 44px;
             vertical-align: middle;
             /* 防止按钮超出边界 */
             box-sizing: border-box;
             /* 确保按钮在安卓上正确渲染 */
             -webkit-transform: translateZ(0);
             transform: translateZ(0);
-            /* 文字完全居中 */
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            /* 确保文字垂直和水平都居中 */
+            /* 文字在按钮内居中 */
             text-align: center;
-            line-height: 1;
-            /* 移除之前的line-height设置 */
-            min-height: 44px;
+            /* 使用line-height实现垂直居中 */
+            line-height: 44px;
             /* 确保按钮内容完全居中 */
             padding: 12px 20px;
         }
@@ -137,10 +132,8 @@
                 /* 确保按钮在小屏幕上正确显示 */
                 max-width: calc(50vw - 30px);
                 /* 保持文字居中 */
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                line-height: 1;
+                text-align: center;
+                line-height: 40px;
                 min-height: 40px;
             }
         }
@@ -172,10 +165,8 @@
                 overflow: hidden;
                 text-overflow: ellipsis;
                 /* 保持文字居中 */
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                line-height: 1;
+                text-align: center;
+                line-height: 44px;
                 min-height: 44px;
             }
         }
@@ -194,10 +185,8 @@
                 margin-left: 5px;
                 min-width: 60px;
                 /* 保持文字居中 */
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                line-height: 1;
+                text-align: center;
+                line-height: 36px;
                 min-height: 36px;
             }
             
@@ -218,10 +207,8 @@
                 padding: 8px 16px;
                 min-height: 36px;
                 /* 保持文字居中 */
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                line-height: 1;
+                text-align: center;
+                line-height: 36px;
             }
         }
     </style>

@@ -5,82 +5,85 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>翰林國小數學-5上AR-三角柱</title>
     
-    <!-- 更新 A-Frame 版本 -->
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.0/dist/mindar-image-aframe.prod.js"></script>
     
-    <!-- 添加額外的互動組件 -->
-    <script src="https://raw.githack.com/donmccurdy/aframe-extras/master/dist/aframe-extras.loaders.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@v6.1.1/dist/aframe-extras.min.js"></script>
 
     <style>
+        /* 基本頁面設定，防止滾動和白邊 */
         body { 
             margin: 0; 
             overflow: hidden; 
             width: 100vw;
             height: 100vh;
         }
+        /* 隱藏 A-Frame 預設的 VR 按鈕 */
         .a-enter-vr {
             display: none;
         }
+        /* 確保 AR 畫面滿版顯示 */
         .a-canvas {
             width: 100% !important;
             height: 100% !important;
             position: absolute !important;
         }
-        /* 修改按鈕容器樣式 */
+
+        /* 按鈕區塊的容器 */
         .button-container {
             position: fixed;
             bottom: 20px;
             right: 20px;
-            z-index: 1000;
+            z-index: 1000; /* 確保按鈕在最上層 */
             display: flex;
-            flex-direction: column; /* 兩行 */
-            gap: 10px;
-            display: none; /* 初始時隱藏按鈕 */
+            flex-direction: column; /* 按鈕分成上下兩行 */
+            gap: 10px; /* 行之間的間距 */
+            
+            /* 這是控制按鈕顯示的關鍵：預設為 none (隱藏) */
+            /* JavaScript 會在 AR 準備好後，將其改為 'flex' (顯示) */
+            display: none; 
+
             max-width: 300px;
             justify-content: flex-end;
-            align-items: flex-end; /* 讓 row 靠右 */
+            align-items: flex-end;
         }
+
+        /* 按鈕列樣式 */
         .yellow-row, .blue-row {
             display: flex;
             flex-direction: row;
-            gap: 10px;
+            gap: 10px; /* 按鈕之間的間距 */
             justify-content: flex-end;
         }
+
+        /* 通用按鈕樣式 */
         .ar-button {
             padding: 10px 20px;
-            background-color: #FFC000; /* 背景顏色改為 #FFC000 */
-            border: 2px solid #000000; /* 黑色邊框 */
+            background-color: #FFC000;
+            border: 2px solid #000000;
             border-radius: 5px;
             cursor: pointer;
             font-size: 16px;
-            font-weight: bold; /* 添加粗體 */
+            font-weight: bold;
             text-decoration: none;
-            color: #000000; /* 文字顏色改為黑色 */
+            color: #000000;
             text-align: center;
         }
         .ar-button:hover {
-            background-color: #FFD133; /* 懸停時稍微變亮 */
+            background-color: #FFD133;
         }
+
+        /* 藍色按鈕的特定樣式 */
         .blue-button {
-            background-color: #0074D9; /* 藍色 */
-            color: #fff; /* 白色文字 */
+            background-color: #0074D9;
+            color: #fff;
             border: 2px solid #000000;
         }
         .blue-button:hover {
-            background-color: #339CFF; /* 懸停時變亮 */
-        }
-        .blue-row {
-            width: 100%;
-            display: flex;
-            flex-direction: row;
-            justify-content: flex-end;
-            gap: 10px;
-            margin-top: 5px; /* 可依需求調整上下間距 */
+            background-color: #339CFF;
         }
     </style>
 
-    <!-- 直接在頭部定義手勢處理腳本 -->
     <script>
         AFRAME.registerComponent('gesture-handler', {
             schema: {
@@ -89,7 +92,6 @@
                 minScale: { default: 0.3 },
                 maxScale: { default: 8 },
             },
-
             init: function() {
                 this.handleScale = this.handleScale.bind(this);
                 this.handleRotation = this.handleRotation.bind(this);
@@ -106,68 +108,46 @@
                 this.el.sceneEl.addEventListener('gesturechange', this.handleScale);
                 this.el.sceneEl.addEventListener('gestureend', this.handleScale);
             },
-
             handleRotation: function(event) {
-                if (event.touches.length === 1) {
-                    if (event.type === 'touchstart') {
-                        this.rotationStart = {
-                            x: event.touches[0].pageX,
-                            y: event.touches[0].pageY
-                        };
-                    } else if (event.type === 'touchmove' && this.rotationStart) {
-                        const deltaX = event.touches[0].pageX - this.rotationStart.x;
-                        const deltaY = event.touches[0].pageY - this.rotationStart.y;
-                        
-                        this.el.object3D.rotation.y += deltaX * 0.01 * this.data.rotationFactor;
-                        this.el.object3D.rotation.x += deltaY * 0.01 * this.data.rotationFactor;
-                        
-                        this.rotationStart = {
-                            x: event.touches[0].pageX,
-                            y: event.touches[0].pageY
-                        };
-                    }
+                if (event.touches.length !== 1) { return; }
+                if (event.type === 'touchmove') {
+                    const deltaX = event.touches[0].pageX - this.previousTouch.x;
+                    const deltaY = event.touches[0].pageY - this.previousTouch.y;
+                    this.el.object3D.rotation.y += deltaX * 0.005 * this.data.rotationFactor;
+                    this.el.object3D.rotation.x += deltaY * 0.005 * this.data.rotationFactor;
                 }
+                this.previousTouch = { x: event.touches[0].pageX, y: event.touches[0].pageY };
             },
-
             handleScale: function(event) {
-                if (event.type === 'gesturechange') {
-                    const newScaleFactor = this.scaleFactor * event.scale;
-                    
-                    const validScale = Math.min(
-                        Math.max(this.data.minScale, newScaleFactor),
-                        this.data.maxScale
-                    );
-
-                    this.el.object3D.scale.x = this.initialScale.x * validScale;
-                    this.el.object3D.scale.y = this.initialScale.y * validScale;
-                    this.el.object3D.scale.z = this.initialScale.z * validScale;
-                } else if (event.type === 'gestureend') {
-                    this.scaleFactor = this.el.object3D.scale.x / this.initialScale.x;
+                if (event.scale) {
+                    const newScale = this.scaleFactor * event.scale;
+                    const clampedScale = Math.max(this.data.minScale, Math.min(this.data.maxScale, newScale));
+                    this.el.object3D.scale.set(clampedScale, clampedScale, clampedScale);
+                }
+                if (event.type === 'gestureend') {
+                    this.scaleFactor = this.el.object3D.scale.x;
                 }
             }
         });
     </script>
 </head>
 <body>
-    <!-- 按鈕容器 -->
     <div class="button-container">
         <div class="yellow-row">
-            <a href="https://abbyolo0817.github.io/prism32/" class="ar-button">頂點</a>
-            <a href="https://abbyolo0817.github.io/prism33/" class="ar-button">邊</a>
+            <a href="https://website.hle.com.tw/ema/ar/prism32/index.html" class="ar-button">頂點</a>
+            <a href="https://website.hle.com.tw/ema/ar/prism33/index.html" class="ar-button">邊</a>
         </div>
         <div class="blue-row">
-            <a href="https://abbyolo0817.github.io/prism41/" class="ar-button blue-button">四角柱</a>
-            <a href="https://abbyolo0817.github.io/prism51/" class="ar-button blue-button">五角柱</a>
-            <a href="https://abbyolo0817.github.io/prism61/" class="ar-button blue-button">六角柱</a>
+            <a href="https://website.hle.com.tw/ema/ar/prism41/index.html" class="ar-button blue-button">四角柱</a>
+            <a href="https://website.hle.com.tw/ema/ar/prism51/index.html" class="ar-button blue-button">五角柱</a>
+            <a href="https://website.hle.com.tw/ema/ar/prism61/index.html" class="ar-button blue-button">六角柱</a>
         </div>
     </div>
 
     <a-scene mindar-image="imageTargetSrc: ./targets.mind; 
              autoStart: true;
              filterMinCF: 0.001;
-             filterBeta: 0.01;
-             warmupTolerance: 5;
-             missTolerance: 5" 
+             filterBeta: 0.01;" 
              color-space="sRGB" 
              renderer="colorManagement: true, physicallyCorrectLights" 
              vr-mode-ui="enabled: false" 
@@ -176,39 +156,36 @@
         
         <a-camera position="0 0 0" look-controls="enabled: false" cursor="fuse: false; rayOrigin: mouse;"></a-camera>
 
-        <!-- 保留單一目標圖片和模型 -->
         <a-entity mindar-image-target="targetIndex: 0">
             <a-gltf-model id="model" 
-                         class="clickable"
                          src="./assets/model.glb" 
                          position="0 0 0" 
                          scale="0.5 0.5 0.5"
                          rotation="0 0 0"
                          animation-mixer
-                         gesture-handler></a-gltf-model>
+                         gesture-handler>
+            </a-gltf-model>
         </a-entity>
     </a-scene>
 
     <script>
-        // 監聽模型加載
-        document.querySelector('#model').addEventListener('model-loaded', function() {
-            console.log('模型已加載');
-        });
+        document.addEventListener('DOMContentLoaded', () => {
+            const sceneEl = document.querySelector('a-scene');
+            const buttonContainer = document.querySelector('.button-container');
 
-        // 監聽相機權限狀態
-        const sceneEl = document.querySelector('a-scene');
-        const buttonContainer = document.querySelector('.button-container');
+            // 監聽：當 AR 系統成功啟動 (通常意味著相機權限已獲取)
+            sceneEl.addEventListener('arReady', (event) => {
+                console.log('AR 系統準備就緒 (arReady event fired)');
+                // 顯示按鈕
+                buttonContainer.style.display = 'flex';
+            });
 
-        // 當場景準備就緒時（相機已獲得權限）
-        sceneEl.addEventListener('arReady', function() {
-            console.log('AR 系統準備就緒');
-            buttonContainer.style.display = 'flex'; // 顯示按鈕
-        });
-
-        // 當場景出錯時（可能是相機權限被拒絕）
-        sceneEl.addEventListener('arError', function(ev) {
-            console.log('AR 系統錯誤:', ev);
-            buttonContainer.style.display = 'none'; // 確保按鈕不顯示
+            // 監聽：當 AR 系統啟動失敗 (例如相機權限被拒絕)
+            sceneEl.addEventListener('arError', (event) => {
+                console.error('AR 系統錯誤 (arError event fired):', event.detail);
+                // 確保按鈕是隱藏的
+                buttonContainer.style.display = 'none';
+            });
         });
     </script>
 </body>

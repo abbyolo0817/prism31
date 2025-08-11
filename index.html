@@ -237,12 +237,14 @@
         function forceShowButtons() {
             console.log('強制顯示按鈕');
             buttonContainer.style.display = 'block';
+            buttonContainer.style.visibility = 'visible';
+            buttonContainer.style.opacity = '1';
             // 為安卓設備添加額外的樣式
             if (isAndroid()) {
                 buttonContainer.style.position = 'fixed';
                 buttonContainer.style.zIndex = '9999';
-                buttonContainer.style.visibility = 'visible';
-                buttonContainer.style.opacity = '1';
+                // 確保按鈕在安卓上始終可見
+                buttonContainer.setAttribute('data-visible', 'true');
             }
         }
         
@@ -253,12 +255,14 @@
 
         // 改進的事件監聽器 - 多重觸發機制
         let buttonsShown = false;
+        let permissionGranted = false;
         
         // 當場景準備就緒時
         sceneEl.addEventListener('arReady', function() {
             console.log('AR 系統準備就緒');
+            permissionGranted = true;
             if (!buttonsShown) {
-                buttonContainer.style.display = 'block';
+                forceShowButtons();
                 buttonsShown = true;
             }
         });
@@ -288,6 +292,7 @@
         // 當相機權限獲得時
         sceneEl.addEventListener('camera-init', function() {
             console.log('相機已初始化');
+            permissionGranted = true;
             if (!buttonsShown) {
                 forceShowButtons();
                 buttonsShown = true;
@@ -297,9 +302,49 @@
         // 當相機權限狀態改變時
         sceneEl.addEventListener('camera-permission-granted', function() {
             console.log('相機權限已獲得');
-            if (!buttonsShown) {
+            permissionGranted = true;
+            // 權限獲得後立即顯示按鈕
+            setTimeout(function() {
                 forceShowButtons();
                 buttonsShown = true;
+            }, 100);
+        });
+        
+        // 新增：監聽相機權限被拒絕
+        sceneEl.addEventListener('camera-permission-denied', function() {
+            console.log('相機權限被拒絕');
+            // 即使權限被拒絕也顯示按鈕
+            setTimeout(function() {
+                forceShowButtons();
+                buttonsShown = true;
+            }, 100);
+        });
+        
+        // 新增：監聽AR系統狀態變化
+        sceneEl.addEventListener('renderstart', function() {
+            console.log('AR 渲染開始');
+            // 確保按鈕在渲染過程中保持可見
+            if (permissionGranted && !buttonsShown) {
+                setTimeout(function() {
+                    forceShowButtons();
+                    buttonsShown = true;
+                }, 500);
+            }
+        });
+        
+        // 新增：監聽AR系統暫停和恢復
+        sceneEl.addEventListener('pause', function() {
+            console.log('AR 系統暫停');
+        });
+        
+        sceneEl.addEventListener('play', function() {
+            console.log('AR 系統恢復');
+            // 系統恢復後確保按鈕可見
+            if (permissionGranted) {
+                setTimeout(function() {
+                    forceShowButtons();
+                    buttonsShown = true;
+                }, 300);
             }
         });
         
@@ -318,6 +363,23 @@
         // 額外的安卓兼容性檢查
         if (isAndroid()) {
             console.log('檢測到安卓設備，啟用特殊處理');
+            
+            // 監聽權限變化
+            if (navigator.permissions) {
+                navigator.permissions.query({name: 'camera'}).then(function(result) {
+                    result.onchange = function() {
+                        console.log('相機權限狀態變化:', result.state);
+                        if (result.state === 'granted') {
+                            permissionGranted = true;
+                            setTimeout(function() {
+                                forceShowButtons();
+                                buttonsShown = true;
+                            }, 200);
+                        }
+                    };
+                });
+            }
+            
             // 為安卓設備添加額外的樣式檢查
             document.addEventListener('DOMContentLoaded', function() {
                 setTimeout(function() {
@@ -327,6 +389,31 @@
                         buttonsShown = true;
                     }
                 }, 1000);
+            });
+            
+            // 監聽頁面可見性變化
+            document.addEventListener('visibilitychange', function() {
+                if (!document.hidden) {
+                    console.log('頁面重新可見');
+                    // 頁面重新可見時檢查按鈕狀態
+                    setTimeout(function() {
+                        if (permissionGranted && !buttonsShown) {
+                            forceShowButtons();
+                            buttonsShown = true;
+                        }
+                    }, 500);
+                }
+            });
+            
+            // 監聽窗口焦點變化
+            window.addEventListener('focus', function() {
+                console.log('窗口獲得焦點');
+                setTimeout(function() {
+                    if (permissionGranted && !buttonsShown) {
+                        forceShowButtons();
+                        buttonsShown = true;
+                    }
+                }, 300);
             });
         }
         
@@ -338,6 +425,45 @@
                     buttonsShown = true;
                 }, 500);
             }
+        });
+        
+        // 新增：定期檢查按鈕可見性
+        setInterval(function() {
+            if (permissionGranted && buttonsShown) {
+                // 檢查按鈕是否真的可見
+                const computedStyle = window.getComputedStyle(buttonContainer);
+                if (computedStyle.display === 'none' || computedStyle.visibility === 'hidden') {
+                    console.log('檢測到按鈕被隱藏，重新顯示');
+                    forceShowButtons();
+                }
+            }
+        }, 2000);
+        
+        // 新增：防止按鈕被AR系統覆蓋
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+                    if (permissionGranted && buttonsShown) {
+                        const target = mutation.target;
+                        if (target === buttonContainer || target.contains(buttonContainer)) {
+                            const computedStyle = window.getComputedStyle(buttonContainer);
+                            if (computedStyle.display === 'none' || computedStyle.visibility === 'hidden') {
+                                console.log('檢測到按鈕樣式被修改，重新設置');
+                                setTimeout(function() {
+                                    forceShowButtons();
+                                }, 100);
+                            }
+                        }
+                    }
+                }
+            });
+        });
+        
+        // 開始監聽DOM變化
+        observer.observe(document.body, {
+            attributes: true,
+            subtree: true,
+            attributeFilter: ['style']
         });
     </script>
 </body>

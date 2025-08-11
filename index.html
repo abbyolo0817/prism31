@@ -84,6 +84,17 @@
             /* 确保按钮在安卓上正确渲染 */
             -webkit-transform: translateZ(0);
             transform: translateZ(0);
+            /* 文字完全居中 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            /* 确保文字垂直和水平都居中 */
+            text-align: center;
+            line-height: 1;
+            /* 移除之前的line-height设置 */
+            min-height: 44px;
+            /* 确保按钮内容完全居中 */
+            padding: 12px 20px;
         }
         .ar-button:hover {
             background-color: #FFD133;
@@ -125,6 +136,12 @@
                 margin-left: 8px;
                 /* 确保按钮在小屏幕上正确显示 */
                 max-width: calc(50vw - 30px);
+                /* 保持文字居中 */
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                line-height: 1;
+                min-height: 40px;
             }
         }
         
@@ -154,6 +171,12 @@
                 white-space: nowrap;
                 overflow: hidden;
                 text-overflow: ellipsis;
+                /* 保持文字居中 */
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                line-height: 1;
+                min-height: 44px;
             }
         }
         
@@ -170,6 +193,12 @@
                 font-size: 12px;
                 margin-left: 5px;
                 min-width: 60px;
+                /* 保持文字居中 */
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                line-height: 1;
+                min-height: 36px;
             }
             
             .yellow-row, .blue-row {
@@ -188,6 +217,11 @@
             .ar-button {
                 padding: 8px 16px;
                 min-height: 36px;
+                /* 保持文字居中 */
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                line-height: 1;
             }
         }
     </style>

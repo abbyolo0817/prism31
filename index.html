@@ -2,46 +2,342 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>翰林國小數學-5上AR-三角柱</title>
+    
+    <!-- 更新 A-Frame 版本 -->
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.0/dist/mindar-image-aframe.prod.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@v6.1.1/dist/aframe-extras.min.js"></script>
+    
+    <!-- 添加額外的互動組件 -->
+    <script src="https://raw.githack.com/donmccurdy/aframe-extras/master/dist/aframe-extras.loaders.min.js"></script>
+
     <style>
-        body { margin: 0; overflow: hidden; }
-        .a-enter-vr { display: none; }
-        .a-canvas { width: 100% !important; height: 100% !important; position: absolute !important; }
+        body { 
+            margin: 0; 
+            overflow: hidden; 
+            width: 100vw;
+            height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        .a-enter-vr {
+            display: none !important;
+        }
+        .a-canvas {
+            width: 100% !important;
+            height: 100% !important;
+            position: absolute !important;
+        }
+        /* 修改按鈕容器樣式 - 提高安卓兼容性 */
         .button-container {
             position: fixed;
             bottom: 20px;
             right: 20px;
-            z-index: 9999; /* 確保層級高於 a-scene */
-            display: none; /* 恢復預設隱藏 */
-            flex-direction: column;
-            gap: 10px;
+            z-index: 9999;
+            display: none; /* 初始時隱藏按鈕 */
+            max-width: 300px;
+            /* 移除可能不兼容的flexbox屬性 */
         }
-        .yellow-row, .blue-row { display: flex; flex-direction: row; gap: 10px; }
-        .ar-button { padding: 10px 20px; background-color: #FFC000; border: 2px solid #000000; border-radius: 5px; cursor: pointer; font-size: 16px; font-weight: bold; text-decoration: none; color: #000000; text-align: center; }
-        .ar-button:hover { background-color: #FFD133; }
-        .blue-button { background-color: #0074D9; color: #fff; border: 2px solid #000000; }
-        .blue-button:hover { background-color: #339CFF; }
+        .yellow-row, .blue-row {
+            margin-bottom: 10px;
+            text-align: right;
+        }
+        .ar-button {
+            display: inline-block;
+            padding: 12px 20px;
+            background-color: #FFC000;
+            border: 2px solid #000000;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            text-decoration: none;
+            color: #000000;
+            text-align: center;
+            margin-left: 10px;
+            /* 添加安卓兼容的樣式 */
+            -webkit-appearance: none;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            /* 確保按鈕在安卓上可見 */
+            min-height: 44px;
+            line-height: 1.2;
+            vertical-align: middle;
+        }
+        .ar-button:hover {
+            background-color: #FFD133;
+        }
+        .ar-button:active {
+            background-color: #E6AC00;
+            transform: translateY(1px);
+        }
+        .blue-button {
+            background-color: #0074D9;
+            color: #fff;
+            border: 2px solid #000000;
+        }
+        .blue-button:hover {
+            background-color: #339CFF;
+        }
+        .blue-button:active {
+            background-color: #0056B3;
+        }
+        /* 添加安卓特定的樣式 */
+        @media screen and (-webkit-min-device-pixel-ratio: 0) {
+            .ar-button {
+                -webkit-transform: translateZ(0);
+                transform: translateZ(0);
+            }
+        }
+        /* 確保按鈕在各種設備上都能正確顯示 */
+        @media (max-width: 768px) {
+            .button-container {
+                bottom: 15px;
+                right: 15px;
+                max-width: 280px;
+            }
+            .ar-button {
+                padding: 10px 16px;
+                font-size: 14px;
+                margin-left: 8px;
+            }
+        }
     </style>
-    </head>
+
+    <!-- 直接在頭部定義手勢處理腳本 -->
+    <script>
+        AFRAME.registerComponent('gesture-handler', {
+            schema: {
+                enabled: { default: true },
+                rotationFactor: { default: 5 },
+                minScale: { default: 0.3 },
+                maxScale: { default: 8 },
+            },
+
+            init: function() {
+                this.handleScale = this.handleScale.bind(this);
+                this.handleRotation = this.handleRotation.bind(this);
+
+                this.isVisible = false;
+                this.initialScale = this.el.object3D.scale.clone();
+                this.scaleFactor = 1;
+
+                this.el.sceneEl.addEventListener('touchstart', this.handleRotation);
+                this.el.sceneEl.addEventListener('touchmove', this.handleRotation);
+                this.el.sceneEl.addEventListener('touchend', this.handleRotation);
+                
+                this.el.sceneEl.addEventListener('gesturestart', this.handleScale);
+                this.el.sceneEl.addEventListener('gesturechange', this.handleScale);
+                this.el.sceneEl.addEventListener('gestureend', this.handleScale);
+            },
+
+            handleRotation: function(event) {
+                if (event.touches.length === 1) {
+                    if (event.type === 'touchstart') {
+                        this.rotationStart = {
+                            x: event.touches[0].pageX,
+                            y: event.touches[0].pageY
+                        };
+                    } else if (event.type === 'touchmove' && this.rotationStart) {
+                        const deltaX = event.touches[0].pageX - this.rotationStart.x;
+                        const deltaY = event.touches[0].pageY - this.rotationStart.y;
+                        
+                        this.el.object3D.rotation.y += deltaX * 0.01 * this.data.rotationFactor;
+                        this.el.object3D.rotation.x += deltaY * 0.01 * this.data.rotationFactor;
+                        
+                        this.rotationStart = {
+                            x: event.touches[0].pageX,
+                            y: event.touches[0].pageY
+                        };
+                    }
+                }
+            },
+
+            handleScale: function(event) {
+                if (event.type === 'gesturechange') {
+                    const newScaleFactor = this.scaleFactor * event.scale;
+                    
+                    const validScale = Math.min(
+                        Math.max(this.data.minScale, newScaleFactor),
+                        this.data.maxScale
+                    );
+
+                    this.el.object3D.scale.x = this.initialScale.x * validScale;
+                    this.el.object3D.scale.y = this.initialScale.y * validScale;
+                    this.el.object3D.scale.z = this.initialScale.z * validScale;
+                } else if (event.type === 'gestureend') {
+                    this.scaleFactor = this.el.object3D.scale.x / this.initialScale.x;
+                }
+            }
+        });
+    </script>
+</head>
 <body>
-    <div class="button-container">
+    <!-- 按鈕容器 -->
+    <div class="button-container" id="buttonContainer">
+        <div class="yellow-row">
+            <a href="https://website.hle.com.tw/ema/ar/prism32/index.html" class="ar-button">頂點</a>
+            <a href="https://website.hle.com.tw/ema/ar/prism33/index.html" class="ar-button">邊</a>
         </div>
-    <a-scene mindar-image="imageTargetSrc: ./targets.mind;" color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false" embedded>
-        <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+        <div class="blue-row">
+            <a href="https://website.hle.com.tw/ema/ar/prism41/index.html" class="ar-button blue-button">四角柱</a>
+            <a href="https://website.hle.com.tw/ema/ar/prism51/index.html" class="ar-button blue-button">五角柱</a>
+            <a href="https://website.hle.com.tw/ema/ar/prism61/index.html" class="ar-button blue-button">六角柱</a>
+        </div>
+    </div>
+
+    <a-scene mindar-image="imageTargetSrc: ./targets.mind; 
+             autoStart: true;
+             filterMinCF: 0.001;
+             filterBeta: 0.01;
+             warmupTolerance: 5;
+             missTolerance: 5" 
+             color-space="sRGB" 
+             renderer="colorManagement: true, physicallyCorrectLights" 
+             vr-mode-ui="enabled: false" 
+             device-orientation-permission-ui="enabled: false"
+             embedded>
+        
+        <a-camera position="0 0 0" look-controls="enabled: false" cursor="fuse: false; rayOrigin: mouse;"></a-camera>
+
+        <!-- 保留單一目標圖片和模型 -->
         <a-entity mindar-image-target="targetIndex: 0">
-            <a-gltf-model id="model" src="./assets/model.glb" position="0 0 0" scale="0.5 0.5 0.5" rotation="0 0 0" animation-mixer gesture-handler></a-gltf-model>
+            <a-gltf-model id="model" 
+                         class="clickable"
+                         src="./assets/model.glb" 
+                         position="0 0 0" 
+                         scale="0.5 0.5 0.5"
+                         rotation="0 0 0"
+                         animation-mixer
+                         gesture-handler></a-gltf-model>
         </a-entity>
     </a-scene>
+
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const sceneEl = document.querySelector('a-scene');
-            const buttonContainer = document.querySelector('.button-container');
-            sceneEl.addEventListener('arReady', () => { buttonContainer.style.display = 'flex'; });
-            sceneEl.addEventListener('arError', () => { buttonContainer.style.display = 'none'; });
+        // 改進的按鈕顯示邏輯 - 提高安卓兼容性
+        const buttonContainer = document.getElementById('buttonContainer');
+        const sceneEl = document.querySelector('a-scene');
+        
+        // 檢測設備類型
+        function isAndroid() {
+            return /Android/i.test(navigator.userAgent);
+        }
+        
+        // 檢測設備類型
+        function isIOS() {
+            return /iPad|iPhone|iPod/.test(navigator.userAgent);
+        }
+        
+        // 強制顯示按鈕的函數
+        function forceShowButtons() {
+            console.log('強制顯示按鈕');
+            buttonContainer.style.display = 'block';
+            // 為安卓設備添加額外的樣式
+            if (isAndroid()) {
+                buttonContainer.style.position = 'fixed';
+                buttonContainer.style.zIndex = '9999';
+                buttonContainer.style.visibility = 'visible';
+                buttonContainer.style.opacity = '1';
+            }
+        }
+        
+        // 監聽模型加載
+        document.querySelector('#model').addEventListener('model-loaded', function() {
+            console.log('模型已加載');
+        });
+
+        // 改進的事件監聽器 - 多重觸發機制
+        let buttonsShown = false;
+        
+        // 當場景準備就緒時
+        sceneEl.addEventListener('arReady', function() {
+            console.log('AR 系統準備就緒');
+            if (!buttonsShown) {
+                buttonContainer.style.display = 'block';
+                buttonsShown = true;
+            }
+        });
+
+        // 當場景出錯時
+        sceneEl.addEventListener('arError', function(ev) {
+            console.log('AR 系統錯誤:', ev);
+            // 即使出錯也嘗試顯示按鈕
+            if (!buttonsShown) {
+                forceShowButtons();
+                buttonsShown = true;
+            }
+        });
+        
+        // 當場景加載完成時
+        sceneEl.addEventListener('loaded', function() {
+            console.log('場景已加載');
+            // 延遲顯示按鈕，確保所有組件都已準備就緒
+            setTimeout(function() {
+                if (!buttonsShown) {
+                    forceShowButtons();
+                    buttonsShown = true;
+                }
+            }, 2000);
+        });
+        
+        // 當相機權限獲得時
+        sceneEl.addEventListener('camera-init', function() {
+            console.log('相機已初始化');
+            if (!buttonsShown) {
+                forceShowButtons();
+                buttonsShown = true;
+            }
+        });
+        
+        // 當相機權限狀態改變時
+        sceneEl.addEventListener('camera-permission-granted', function() {
+            console.log('相機權限已獲得');
+            if (!buttonsShown) {
+                forceShowButtons();
+                buttonsShown = true;
+            }
+        });
+        
+        // 備用方案：如果所有事件都沒有觸發，在頁面加載後強制顯示按鈕
+        window.addEventListener('load', function() {
+            console.log('頁面已完全加載');
+            setTimeout(function() {
+                if (!buttonsShown) {
+                    console.log('使用備用方案顯示按鈕');
+                    forceShowButtons();
+                    buttonsShown = true;
+                }
+            }, 3000);
+        });
+        
+        // 額外的安卓兼容性檢查
+        if (isAndroid()) {
+            console.log('檢測到安卓設備，啟用特殊處理');
+            // 為安卓設備添加額外的樣式檢查
+            document.addEventListener('DOMContentLoaded', function() {
+                setTimeout(function() {
+                    if (buttonContainer.style.display === 'none' || buttonContainer.style.display === '') {
+                        console.log('安卓設備：強制顯示按鈕');
+                        forceShowButtons();
+                        buttonsShown = true;
+                    }
+                }, 1000);
+            });
+        }
+        
+        // 確保按鈕在各種情況下都能顯示
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden && !buttonsShown) {
+                setTimeout(function() {
+                    forceShowButtons();
+                    buttonsShown = true;
+                }, 500);
+            }
         });
     </script>
 </body>
